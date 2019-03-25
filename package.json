@@ -1,0 +1,33 @@
+{
+  "name": "lil-saga",
+  "version": "0.0.0",
+  "description": "A small saga implementation",
+  "main": "dist/lil-saga.js",
+  "module": "dist/lil-saga.es.js",
+  "files": [
+    "dist"
+  ],
+  "types": "dist/lil-saga.d.ts",
+  "repository": "https://github.com//kturney/lil-saga",
+  "author": "Kyle Turney <turney.kyle@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "build": "rollup -c",
+    "lint": "eslint .",
+    "test": "lab test/**/*.ts",
+    "watch": "rollup -cw"
+  },
+  "devDependencies": {
+    "code": "^5.2.4",
+    "eslint": "^5.15.3",
+    "eslint-config-prettier": "^4.1.0",
+    "eslint-plugin-node": "^8.0.1",
+    "eslint-plugin-prettier": "^3.0.1",
+    "lab": "^18.0.2",
+    "lab-transform-typescript": "^3.0.1",
+    "prettier": "^1.16.4",
+    "rollup": "^1.7.0",
+    "rollup-plugin-typescript2": "^0.20.1",
+    "typescript": "^3.3.4000"
+  }
+}
