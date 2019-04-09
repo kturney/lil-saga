@@ -110,17 +110,24 @@ export default function lilSaga(steps: SagaGenerator, { onUndoError = console.er
 
     function performConcurrentStep(
       concurrentStep: Saga | Promise<any>
-    ): Promise<SettledValue<any> | SettledError> | SettledError {
+    ): Promise<SettledValue<any> | SettledError> | SettledValue<any> | SettledError {
       if (isPromise(concurrentStep)) {
         return concurrentStep.then(valueToSettled, errToSettled);
       }
 
       try {
-        return concurrentStep.do().then((stepResult: any) => {
-          concurrentUndoable.items.push(concurrentStep);
+        const res = concurrentStep.do();
 
-          return new SettledValue(stepResult);
-        }, errToSettled);
+        if (isPromise(res)) {
+          return res.then((stepResult: any) => {
+            concurrentUndoable.items.push(concurrentStep);
+
+            return new SettledValue(stepResult);
+          }, errToSettled);
+        }
+
+        concurrentUndoable.items.push(concurrentStep);
+        return new SettledValue(res);
       } catch (err) {
         return new SettledError(err);
       }

@@ -312,11 +312,20 @@ describe('lil-saga', () => {
         {
           do() {
             steps.push('do5');
-            return Promise.reject(new Error('test error 2'));
           },
 
           undo() {
             steps.push('undo5');
+          }
+        },
+        {
+          do() {
+            steps.push('do6');
+            return Promise.reject(new Error('test error 2'));
+          },
+
+          undo() {
+            steps.push('undo6');
           }
         }
       ];
@@ -332,6 +341,8 @@ describe('lil-saga', () => {
       'do3',
       'do4',
       'do5',
+      'do6',
+      'undo5',
       'undo2',
       'undo4',
       'undo1'
