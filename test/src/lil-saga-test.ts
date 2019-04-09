@@ -249,7 +249,7 @@ describe('lil-saga', () => {
 
       throw new Error('test error');
       steps.push('should not get here');
-    });
+    }, { onUndoError: () => {} });
 
     await expect(saga).to.reject(Error, 'test error');
 
@@ -322,7 +322,7 @@ describe('lil-saga', () => {
       ];
 
       steps.push('should not get here');
-    });
+    }, { onUndoError: () => {} });
 
     await expect(saga).to.reject(Error, 'test error 1');
 

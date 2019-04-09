@@ -20,10 +20,6 @@ function isPromise(value: any): value is Promise<any> {
 
 function returnNothing() {}
 
-function ignoreErr(err: Error) {
-  console.error(err);
-}
-
 class SettledValue<T> {
   value: T;
 
@@ -50,27 +46,39 @@ function valueToSettled<T>(value: T) {
 
 class ConcurrentUndoable implements Undoable {
   items: Undoable[];
+  onUndoError: (err: Error) => void;
 
-  constructor() {
+  constructor(onUndoError: (err: Error) => void) {
     this.items = [];
+    this.onUndoError = onUndoError;
   }
 
   undo() {
     return Promise
       .all(this.items.map(undoable => {
-        const ret = undoable.undo();
+        try {
+          const ret = undoable.undo();
 
-        if (isPromise(ret)) {
-          return ret.catch(ignoreErr)
+          if (isPromise(ret)) {
+            return ret.catch(this.onUndoError)
+          }
+        } catch (err) {
+          this.onUndoError(err);
         }
-
-        return ret;
       }))
       .then(returnNothing);
   }
 }
 
-export default function lilSaga(steps: SagaGenerator): Promise<void> {
+interface LilSagaOptions {
+  /**
+   * Errors during undo are not propgated so that they cannot prevent other undos.
+   * This function will be called with any errors that occur during some undo.
+   */
+  onUndoError?: (err: Error) => void
+}
+
+export default function lilSaga(steps: SagaGenerator, { onUndoError = console.error.bind(console) }: LilSagaOptions = {}): Promise<void> {
   const undoables: Undoable[] = [];
   const iter = steps();
 
@@ -82,10 +90,10 @@ export default function lilSaga(steps: SagaGenerator): Promise<void> {
             const undoResult = undoable.undo();
 
             if (isPromise(undoResult)) {
-              return undoResult.catch(ignoreErr);
+              return undoResult.catch(onUndoError);
             }
           } catch (err) {
-            ignoreErr(err);
+            onUndoError(err);
           }
 
           return Promise.resolve();
@@ -97,7 +105,7 @@ export default function lilSaga(steps: SagaGenerator): Promise<void> {
   };
 
   function performConcurrentSteps(value: Array<Saga | Promise<any>>) {
-    const concurrentUndoable = new ConcurrentUndoable();
+    const concurrentUndoable = new ConcurrentUndoable(onUndoError);
     undoables.push(concurrentUndoable);
 
     function performConcurrentStep(

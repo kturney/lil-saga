@@ -2,7 +2,7 @@ module.exports = {
   assert: 'code',
   coverage: true,
   leaks: true,
-  lint: true,
+  lint: false,
   shuffle: true,
   sourcemaps: true,
   threshold: 100,
