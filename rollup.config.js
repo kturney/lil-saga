@@ -22,6 +22,7 @@ module.exports = {
   plugins: [
     typescript({
       cacheRoot: require('path').join(require('os').tmpdir(), '.rpt2_cache'),
+      tsconfigOverride: { compilerOptions: { module: 'esnext' } },
       typescript: require('typescript')
     })
   ]
