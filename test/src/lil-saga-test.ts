@@ -348,4 +348,28 @@ describe('lil-saga', () => {
       'undo1'
     ]);
   });
+
+  it('handles bad yields', async function() {
+    await lilSaga(function*() {
+      yield null;
+    }).then(
+      () => {
+        throw new Error('should not get here');
+      },
+      (err) => {
+        expect(err.message).to.equal('lil-saga only accepts yielded Promises, Sagas, and Arrays but got null')
+      }
+    );
+
+    await lilSaga(function*() {
+      yield [null];
+    }).then(
+      () => {
+        throw new Error('should not get here');
+      },
+      (err) => {
+        expect(err.message).to.equal('lil-saga concurrent steps must be either a Promise or a Saga, was null')
+      }
+    );
+  });
 });

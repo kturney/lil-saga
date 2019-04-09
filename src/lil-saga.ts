@@ -1,9 +1,9 @@
 interface Undoable {
-  undo(): any | Promise<any>;
+  undo(): Promise<any> | any;
 }
 
 interface Saga extends Undoable {
-  do(): any | Promise<any>;
+  do(): Promise<any> | any;
 }
 
 interface SagaGenerator {
@@ -15,7 +15,15 @@ interface SagaGenerator {
 }
 
 function isPromise(value: any): value is Promise<any> {
+  /* $lab:coverage:off$ */
   return value && typeof value.then === 'function';
+  /* $lab:coverage:on$ */
+}
+
+function isSaga(value: any): value is Saga {
+  /* $lab:coverage:off$ */
+  return value && typeof value.do === 'function' && typeof value.undo === 'function';
+  /* $lab:coverage:on$ */
 }
 
 function returnNothing() {}
@@ -56,15 +64,9 @@ class ConcurrentUndoable implements Undoable {
   undo() {
     return Promise
       .all(this.items.map(undoable => {
-        try {
-          const ret = undoable.undo();
-
-          if (isPromise(ret)) {
-            return ret.catch(this.onUndoError)
-          }
-        } catch (err) {
-          this.onUndoError(err);
-        }
+        return Promise.resolve()
+          .then(() => undoable.undo())
+          .catch(this.onUndoError);
       }))
       .then(returnNothing);
   }
@@ -86,17 +88,9 @@ export default function lilSaga(steps: SagaGenerator, { onUndoError = console.er
     return undoables
       .reduceRight((prev, undoable) => {
         return prev.then(() => {
-          try {
-            const undoResult = undoable.undo();
-
-            if (isPromise(undoResult)) {
-              return undoResult.catch(onUndoError);
-            }
-          } catch (err) {
-            onUndoError(err);
-          }
-
-          return Promise.resolve();
+          return Promise.resolve()
+            .then(() => undoable.undo())
+            .catch(onUndoError);
         });
       }, Promise.resolve())
       .then(() => {
@@ -115,22 +109,17 @@ export default function lilSaga(steps: SagaGenerator, { onUndoError = console.er
         return concurrentStep.then(valueToSettled, errToSettled);
       }
 
-      try {
-        const res = concurrentStep.do();
-
-        if (isPromise(res)) {
-          return res.then((stepResult: any) => {
+      if (isSaga(concurrentStep)) {
+        return Promise.resolve()
+          .then(() => concurrentStep.do())
+          .then((stepResult: any) => {
             concurrentUndoable.items.push(concurrentStep);
 
             return new SettledValue(stepResult);
           }, errToSettled);
-        }
-
-        concurrentUndoable.items.push(concurrentStep);
-        return new SettledValue(res);
-      } catch (err) {
-        return new SettledError(err);
       }
+
+      return Promise.reject(new Error(`lil-saga concurrent steps must be either a Promise or a Saga, was ${concurrentStep}`));
     }
 
     function settledToResults(settleds: Array<SettledValue<any> | SettledError>) {
@@ -168,11 +157,15 @@ export default function lilSaga(steps: SagaGenerator, { onUndoError = console.er
         return value.then(performNextStep, rollbackDone);
       }
 
-      return value.do().then((stepResult: any) => {
-        undoables.push(value);
+      if (isSaga(value)) {
+        return Promise.resolve(value.do()).then((stepResult: any) => {
+          undoables.push(value);
 
-        return performNextStep(stepResult);
-      }, rollbackDone);
+          return performNextStep(stepResult);
+        }, rollbackDone);
+      }
+
+      return Promise.reject(new Error(`lil-saga only accepts yielded Promises, Sagas, and Arrays but got ${value}`));
     } catch (err) {
       return rollbackDone(err);
     }
