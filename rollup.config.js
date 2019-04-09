@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 const typescript = require('rollup-plugin-typescript2');
 const pkg = require('./package.json');
+/* eslint-enable @typescript-eslint/no-var-requires */
 
 module.exports = {
   input: 'src/lil-saga.ts',

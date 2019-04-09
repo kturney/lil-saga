@@ -8,7 +8,7 @@
     "dist"
   ],
   "types": "dist/lil-saga.d.ts",
-  "repository": "https://github.com//kturney/lil-saga",
+  "repository": "https://github.com/kturney/lil-saga",
   "author": "Kyle Turney <turney.kyle@gmail.com>",
   "license": "MIT",
   "scripts": {
@@ -18,6 +18,8 @@
     "watch": "rollup -cw"
   },
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^1.6.0",
+    "@typescript-eslint/parser": "^1.6.0",
     "code": "^5.2.4",
     "eslint": "^5.15.3",
     "eslint-config-prettier": "^4.1.0",
