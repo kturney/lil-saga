@@ -1,5 +1,13 @@
 # Lil' Saga
 
+[npm-badge]: https://img.shields.io/npm/v/lil-saga.svg
+[npm-badge-url]: https://www.npmjs.com/package/lil-saga
+[travis-badge]: https://img.shields.io/travis/kturney/lil-saga/master.svg
+[travis-badge-url]: https://travis-ci.org/kturney/lil-saga
+
+[![Latest NPM release][npm-badge]][npm-badge-url]
+[![TravisCI Build Status][travis-badge]][travis-badge-url]
+
 `lil-saga` is a small library to assist in use of the [saga pattern](https://en.wikipedia.org/wiki/Long-running_transaction).
 
 ## Usage
