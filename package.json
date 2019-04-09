@@ -1,6 +1,6 @@
 {
   "name": "lil-saga",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "A small saga implementation",
   "main": "dist/lil-saga.js",
   "module": "dist/lil-saga.es.js",
