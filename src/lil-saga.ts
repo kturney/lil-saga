@@ -1,20 +1,20 @@
 interface Undoable {
-  undo(): Promise<any> | any;
+  undo(): Promise<unknown> | unknown;
 }
 
 interface Saga extends Undoable {
-  do(): Promise<any> | any;
+  do(): Promise<unknown> | unknown;
 }
 
 interface SagaGenerator {
   (): Iterator<
     Saga
-    | Promise<any>
-    | Array<Saga | Promise<any>>
+    | Promise<unknown>
+    | Array<Saga | Promise<unknown>>
   >
 }
 
-function isPromise(value: any): value is Promise<any> {
+function isPromise(value: any): value is Promise<unknown> {
   /* $lab:coverage:off$ */
   return value && typeof value.then === 'function';
   /* $lab:coverage:on$ */
@@ -80,13 +80,16 @@ interface LilSagaOptions {
   onUndoError?: (err: Error) => void
 }
 
-export default function lilSaga(steps: SagaGenerator, { onUndoError = console.error.bind(console) }: LilSagaOptions = {}): Promise<void> {
+export default function lilSaga(
+  steps: SagaGenerator,
+  { onUndoError = console.error.bind(console) }: LilSagaOptions = {}
+): Promise<void> {
   const undoables: Undoable[] = [];
   const iter = steps();
 
-  const rollbackDone = (err: Error) => {
+  const rollbackDone = (err: Error): Promise<void> => {
     return undoables
-      .reduceRight((prev, undoable) => {
+      .reduceRight((prev, undoable): Promise<any> => {
         return prev.then(() => {
           return Promise.resolve()
             .then(() => undoable.undo())
@@ -98,13 +101,13 @@ export default function lilSaga(steps: SagaGenerator, { onUndoError = console.er
       });
   };
 
-  function performConcurrentSteps(value: Array<Saga | Promise<any>>) {
+  function performConcurrentSteps(value: Array<Saga | Promise<unknown>>) {
     const concurrentUndoable = new ConcurrentUndoable(onUndoError);
     undoables.push(concurrentUndoable);
 
     function performConcurrentStep(
-      concurrentStep: Saga | Promise<any>
-    ): Promise<SettledValue<any> | SettledError> | SettledValue<any> | SettledError {
+      concurrentStep: Saga | Promise<unknown>
+    ): Promise<SettledValue<unknown> | SettledError> | SettledValue<unknown> | SettledError {
       if (isPromise(concurrentStep)) {
         return concurrentStep.then(valueToSettled, errToSettled);
       }
@@ -112,7 +115,7 @@ export default function lilSaga(steps: SagaGenerator, { onUndoError = console.er
       if (isSaga(concurrentStep)) {
         return Promise.resolve()
           .then(() => concurrentStep.do())
-          .then((stepResult: any) => {
+          .then((stepResult: unknown) => {
             concurrentUndoable.items.push(concurrentStep);
 
             return new SettledValue(stepResult);
@@ -122,7 +125,7 @@ export default function lilSaga(steps: SagaGenerator, { onUndoError = console.er
       return Promise.reject(new Error(`lil-saga concurrent steps must be either a Promise or a Saga, was ${concurrentStep}`));
     }
 
-    function settledToResults(settleds: Array<SettledValue<any> | SettledError>) {
+    function settledToResults(settleds: Array<SettledValue<unknown> | SettledError>) {
       const results = [];
 
       for (const settled of settleds) {
@@ -141,7 +144,7 @@ export default function lilSaga(steps: SagaGenerator, { onUndoError = console.er
       .then(settledToResults);
   }
 
-  function performNextStep(preStepResult?: any): Promise<void> {
+  function performNextStep(preStepResult?: unknown): Promise<void> {
     try {
       const { value, done } = iter.next(preStepResult);
 
@@ -158,7 +161,7 @@ export default function lilSaga(steps: SagaGenerator, { onUndoError = console.er
       }
 
       if (isSaga(value)) {
-        return Promise.resolve(value.do()).then((stepResult: any) => {
+        return Promise.resolve(value.do()).then((stepResult: unknown) => {
           undoables.push(value);
 
           return performNextStep(stepResult);
